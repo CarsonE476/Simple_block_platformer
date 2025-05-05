@@ -246,6 +246,7 @@ function initGame(container, soundOptions) {
     height: 720,
     scale: 1,
     debug: false,
+    gravity: 2000,  // Set gravity directly in config
   });
   
   // Store game instance for cleanup
@@ -275,8 +276,8 @@ function initGame(container, soundOptions) {
   k.loadSound("hit", "/sounds/hit.mp3");
   k.loadSound("complete", "/sounds/success.mp3");
   
-  // Set up gravity
-  k.gravity(2000);
+  // Set up gravity - using the gravity config in kaboom initialization instead
+  // k.gravity(2000); - This was causing errors
   
   // Define player movement
   k.onKeyDown("left", () => {

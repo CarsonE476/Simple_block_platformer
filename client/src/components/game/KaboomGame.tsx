@@ -17,19 +17,35 @@ const KaboomGame = () => {
   
   // Initialize the game
   useEffect(() => {
-    if (!gameContainerRef.current || !window.platformerGame) return;
+    if (!gameContainerRef.current) return;
     
-    // Initialize the game using the JavaScript implementation
-    window.platformerGame.init(gameContainerRef.current, {
-      playHit,
-      playSuccess,
-      isMuted: () => isMuted,
-    });
+    // Wait for platformerGame to be available
+    const initInterval = setInterval(() => {
+      if (window.platformerGame) {
+        clearInterval(initInterval);
+        
+        try {
+          // Initialize the game using the JavaScript implementation
+          window.platformerGame.init(gameContainerRef.current, {
+            playHit,
+            playSuccess,
+            isMuted: () => isMuted,
+          });
+        } catch (error) {
+          console.error("Error initializing game:", error);
+        }
+      }
+    }, 100);
     
     // Clean up when component unmounts
     return () => {
+      clearInterval(initInterval);
       if (window.platformerGame) {
-        window.platformerGame.destroy();
+        try {
+          window.platformerGame.destroy();
+        } catch (error) {
+          console.error("Error destroying game:", error);
+        }
       }
     };
   }, [playHit, playSuccess, isMuted]);
