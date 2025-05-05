@@ -1,6 +1,15 @@
 import { useEffect, useRef } from "react";
 import { useAudio } from "@/lib/stores/useAudio";
-import { initGame } from "@/lib/game";
+
+// Define the platformerGame type on the window object
+declare global {
+  interface Window {
+    platformerGame: {
+      init: (container: HTMLElement, soundOptions: any) => any;
+      destroy: () => void;
+    };
+  }
+}
 
 const KaboomGame = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -8,24 +17,21 @@ const KaboomGame = () => {
   
   // Initialize the game
   useEffect(() => {
-    if (!gameContainerRef.current) return;
+    if (!gameContainerRef.current || !window.platformerGame) return;
     
-    // Remove any existing canvas
-    const existingCanvas = gameContainerRef.current.querySelector("canvas");
-    if (existingCanvas) {
-      existingCanvas.remove();
-    }
-    
-    const cleanup = initGame({
-      container: gameContainerRef.current,
-      soundEffects: {
-        playHit,
-        playSuccess,
-        isMuted: () => isMuted,
-      },
+    // Initialize the game using the JavaScript implementation
+    window.platformerGame.init(gameContainerRef.current, {
+      playHit,
+      playSuccess,
+      isMuted: () => isMuted,
     });
     
-    return cleanup;
+    // Clean up when component unmounts
+    return () => {
+      if (window.platformerGame) {
+        window.platformerGame.destroy();
+      }
+    };
   }, [playHit, playSuccess, isMuted]);
   
   return (
