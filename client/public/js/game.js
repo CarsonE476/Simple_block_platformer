@@ -134,7 +134,7 @@ function updateScore() {
 
 // Build a level
 function buildLevel(k, levelData) {
-  // Create player
+  // Create player - make sure it's visible and has proper size
   const player = k.add([
     k.sprite("player"),
     k.pos(levelData.player.x, levelData.player.y),
@@ -142,9 +142,14 @@ function buildLevel(k, levelData) {
     k.body(),
     k.health(3),
     k.anchor("center"),
+    k.scale(1.5), // Make player bigger and more visible
+    k.z(10),      // Ensure player is on top
     "player",
   ]);
-
+  
+  // Log player creation
+  console.log("Player created at:", levelData.player.x, levelData.player.y);
+  
   // Player hurt handler
   player.onHurt(() => {
     k.shake(10);
@@ -279,22 +284,22 @@ function initGame(container, soundOptions) {
   // Set up gravity - using the gravity config in kaboom initialization instead
   // k.gravity(2000); - This was causing errors
   
-  // Define player movement
-  k.onKeyDown("left", () => {
+  // Define player movement with arrow keys support
+  k.onKeyDown(["left", "ArrowLeft"], () => {
     const player = k.get("player")[0];
     if (player) {
       player.move(-300, 0);
     }
   });
 
-  k.onKeyDown("right", () => {
+  k.onKeyDown(["right", "ArrowRight"], () => {
     const player = k.get("player")[0];
     if (player) {
       player.move(300, 0);
     }
   });
 
-  k.onKeyPress("space", () => {
+  k.onKeyPress(["space", "ArrowUp", " "], () => {
     const player = k.get("player")[0];
     if (player && player.isGrounded()) {
       player.jump(650);
@@ -303,6 +308,21 @@ function initGame(container, soundOptions) {
           volume: 0.5,
         });
       }
+    }
+  });
+  
+  // Add occasional debug log to help track player status (once per second)
+  let lastLogTime = 0;
+  k.onUpdate(() => {
+    const now = Date.now();
+    if (now - lastLogTime > 1000) { // Only log once per second
+      const player = k.get("player")[0];
+      if (player) {
+        console.log("Player found at position:", player.pos);
+      } else {
+        console.log("Player not found!");
+      }
+      lastLogTime = now;
     }
   });
 

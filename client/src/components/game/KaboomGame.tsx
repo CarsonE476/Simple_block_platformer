@@ -11,13 +11,28 @@ declare global {
   }
 }
 
+interface SoundOptions {
+  playHit: () => void;
+  playSuccess: () => void;
+  isMuted: () => boolean;
+}
+
 const KaboomGame = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const { playHit, playSuccess, isMuted } = useAudio();
   
   // Initialize the game
   useEffect(() => {
-    if (!gameContainerRef.current) return;
+    // Ensure we have a reference to the container
+    const container = gameContainerRef.current;
+    if (!container) return;
+    
+    // Create sound options object
+    const soundOptions: SoundOptions = {
+      playHit,
+      playSuccess,
+      isMuted: () => isMuted,
+    };
     
     // Wait for platformerGame to be available
     const initInterval = setInterval(() => {
@@ -26,11 +41,8 @@ const KaboomGame = () => {
         
         try {
           // Initialize the game using the JavaScript implementation
-          window.platformerGame.init(gameContainerRef.current, {
-            playHit,
-            playSuccess,
-            isMuted: () => isMuted,
-          });
+          window.platformerGame.init(container, soundOptions);
+          console.log("Game initialized successfully");
         } catch (error) {
           console.error("Error initializing game:", error);
         }
@@ -43,6 +55,7 @@ const KaboomGame = () => {
       if (window.platformerGame) {
         try {
           window.platformerGame.destroy();
+          console.log("Game destroyed successfully");
         } catch (error) {
           console.error("Error destroying game:", error);
         }
