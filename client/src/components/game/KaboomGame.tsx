@@ -9,11 +9,6 @@ declare global {
       init: (container: HTMLElement, soundOptions: any) => any;
       destroy: () => void;
     };
-    // New simple vanilla JS implementation
-    simplePlatformerGame: {
-      init: (container: HTMLElement, soundOptions: any) => any;
-      destroy: () => void;
-    };
   }
 }
 
@@ -40,35 +35,25 @@ const KaboomGame = () => {
       isMuted: () => isMuted,
     };
     
-    // Add script tag to ensure our simple implementation is loaded
+    // Add script tag to ensure our implementation is loaded
     const scriptElement = document.createElement('script');
-    scriptElement.src = '/js/simple-game.js';
+    scriptElement.src = '/js/platformer.js';
     scriptElement.async = true;
     document.body.appendChild(scriptElement);
     
-    console.log("Loading simple game implementation...");
+    console.log("Loading platformer game implementation...");
     
-    // Wait for the simple game implementation to be available
+    // Wait for the game implementation to be available
     const initInterval = setInterval(() => {
-      if (window.simplePlatformerGame) {
+      if (window.platformerGame) {
         clearInterval(initInterval);
         
         try {
-          // Initialize the game using our vanilla JS implementation
-          window.simplePlatformerGame.init(container, soundOptions);
-          console.log("Simple platformer game initialized successfully");
+          // Initialize the game
+          window.platformerGame.init(container, soundOptions);
+          console.log("Platformer game initialized successfully");
         } catch (error) {
-          console.error("Error initializing simple game:", error);
-          
-          // Fallback to original implementation if available
-          if (window.platformerGame) {
-            try {
-              window.platformerGame.init(container, soundOptions);
-              console.log("Fallback to original game implementation");
-            } catch (fallbackError) {
-              console.error("Error initializing fallback game:", fallbackError);
-            }
-          }
+          console.error("Error initializing game:", error);
         }
       }
     }, 100);
@@ -83,19 +68,12 @@ const KaboomGame = () => {
       }
       
       // Clean up game instance
-      if (window.simplePlatformerGame) {
-        try {
-          window.simplePlatformerGame.destroy();
-          console.log("Simple game destroyed successfully");
-        } catch (error) {
-          console.error("Error destroying simple game:", error);
-        }
-      } else if (window.platformerGame) {
+      if (window.platformerGame) {
         try {
           window.platformerGame.destroy();
-          console.log("Original game destroyed successfully");
+          console.log("Game destroyed successfully");
         } catch (error) {
-          console.error("Error destroying original game:", error);
+          console.error("Error destroying game:", error);
         }
       }
     };
