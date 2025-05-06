@@ -134,29 +134,43 @@ function updateScore() {
 
 // Build a level
 function buildLevel(k, levelData) {
-  // Create player - make sure it's visible and has proper size
+  // Create player with simpler configuration
+  console.log("Creating player at", levelData.player.x, levelData.player.y);
+  
+  // Create a solid blue rectangle for player
   const player = k.add([
-    k.sprite("player"),
+    k.rect(40, 40),       // Simple rectangle shape (40x40 pixels)
+    k.color(0, 0, 255),   // Solid blue color
     k.pos(levelData.player.x, levelData.player.y),
-    k.area(),
-    k.body(),
+    k.area({ width: 40, height: 40 }),
+    k.body({ weight: 1 }),
     k.health(3),
     k.anchor("center"),
-    k.scale(1.5), // Make player bigger and more visible
-    k.z(10),      // Ensure player is on top
+    k.z(100),             // Very high z-index to ensure visibility
+    k.rotate(0),          // No rotation
     "player",
   ]);
   
-  // Log player creation
-  console.log("Player created at:", levelData.player.x, levelData.player.y);
+  // Add a custom update function for the player
+  player.onUpdate(() => {
+    // Add a small bounce to make it more visible
+    player.color = k.rgb(0, 0, Math.floor(200 + Math.sin(k.time() * 10) * 55));
+  });
   
-  // Player hurt handler
+  // Player hurt handler with more visual feedback
   player.onHurt(() => {
     k.shake(10);
+    player.color = k.rgb(255, 0, 0); // Flash red when hurt
+    setTimeout(() => {
+      player.color = k.rgb(0, 0, 255); // Back to blue
+    }, 200);
+    
     if (player.hp() <= 0) {
       k.go("gameover");
     }
   });
+  
+  console.log("Player object created:", player);
 
   // Add platforms
   levelData.platforms.forEach((platform) => {
@@ -242,7 +256,19 @@ function initGame(container, soundOptions) {
   currentLevel = 0;
   score = 0;
   
-  // Initialize Kaboom
+  // Log key events to help debug
+  const logKeys = (e) => {
+    console.log("Key event:", e.type, e.key, e.code);
+  };
+  
+  // Add keyboard event listeners to document
+  document.addEventListener("keydown", logKeys);
+  document.addEventListener("keyup", logKeys);
+  document.addEventListener("keypress", logKeys);
+  
+  console.log("Game initializing, keyboard event listeners attached...");
+  
+  // Initialize Kaboom with debug enabled
   const k = kaboom({
     global: false,
     canvas: document.createElement("canvas"),
@@ -250,8 +276,8 @@ function initGame(container, soundOptions) {
     width: 1280,
     height: 720,
     scale: 1,
-    debug: false,
-    gravity: 2000,  // Set gravity directly in config
+    debug: true,  // Enable debug to help identify issues
+    gravity: 1800,  // Slightly reduced gravity
   });
   
   // Store game instance for cleanup
@@ -260,8 +286,19 @@ function initGame(container, soundOptions) {
   // Add the canvas to the container
   container.appendChild(k.canvas);
   
+  // Focus the canvas to capture input
+  k.canvas.focus();
+  k.canvas.setAttribute("tabindex", "0");
+  
+  // Make canvas interactive
+  k.canvas.style.outline = "none";
+  k.canvas.addEventListener("click", () => {
+    k.canvas.focus();
+    console.log("Canvas focused");
+  });
+  
   // Load sprites
-  // Player sprite - blue rectangle
+  // Player sprite - blue rectangle (larger for visibility)
   k.loadSprite("player", generateRectSpriteData([0, 0, 255]));
   
   // Platform sprite - brown rectangle
@@ -281,51 +318,78 @@ function initGame(container, soundOptions) {
   k.loadSound("hit", "/sounds/hit.mp3");
   k.loadSound("complete", "/sounds/success.mp3");
   
-  // Set up gravity - using the gravity config in kaboom initialization instead
-  // k.gravity(2000); - This was causing errors
+  // Set up direct key handlers
+  const keys = {
+    left: false,
+    right: false,
+    jump: false
+  };
   
-  // Set up player controls in the update loop - this is more reliable
-  // Add movement debugging
-  let lastLogTime = 0;
+  // Use traditional event listeners for keys
+  window.addEventListener("keydown", (e) => {
+    console.log("Window keydown:", e.key, e.code);
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+      keys.left = true;
+    }
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+      keys.right = true;
+    }
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") {
+      keys.jump = true;
+    }
+  });
+  
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+      keys.left = false;
+    }
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+      keys.right = false;
+    }
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") {
+      keys.jump = false;
+    }
+  });
+  
+  // Player movement in update loop
   const moveSpeed = 300;
   const jumpForce = 650;
+  let canJump = true;
+  let lastLogTime = 0;
   
-  // Use onUpdate for continuous movement
   k.onUpdate(() => {
     const player = k.get("player")[0];
     const now = Date.now();
     
-    // Only log occasionally to prevent console spam
+    // Debug logging
     if (now - lastLogTime > 1000) {
+      console.log("Key states:", keys);
       if (player) {
-        console.log("Player at:", player.pos.x, player.pos.y, "Grounded:", player.isGrounded ? player.isGrounded() : "N/A");
-      } else {
-        console.log("Player not found in scene!");
+        console.log("Player position:", player.pos.x, player.pos.y);
       }
       lastLogTime = now;
     }
     
-    // If player exists, handle movement
-    if (player) {
-      // Left/Right movement
-      if (k.isKeyDown("left") || k.isKeyDown("ArrowLeft")) {
-        player.move(-moveSpeed, 0);
-        console.log("Moving left");
-      }
+    if (!player) return;
+    
+    // Handle movement using the tracked key states
+    if (keys.left) {
+      player.pos.x -= moveSpeed * 1/60; // roughly adjust for frame time
+      console.log("Moving left", player.pos.x);
+    }
+    if (keys.right) {
+      player.pos.x += moveSpeed * 1/60; // roughly adjust for frame time
+      console.log("Moving right", player.pos.x); 
+    }
+    
+    // Handle jumping with a cooldown to prevent double jumps
+    if (keys.jump && canJump && player.isGrounded()) {
+      player.jump(jumpForce);
+      canJump = false;
+      setTimeout(() => { canJump = true; }, 300);
       
-      if (k.isKeyDown("right") || k.isKeyDown("ArrowRight")) {
-        player.move(moveSpeed, 0);
-        console.log("Moving right");
-      }
-      
-      // Jumping
-      if ((k.isKeyPressed("space") || k.isKeyPressed("ArrowUp") || k.isKeyPressed(" ")) && 
-          player.isGrounded && player.isGrounded()) {
-        player.jump(jumpForce);
-        console.log("Jumping!");
-        if (!soundOptions.isMuted()) {
-          k.play("jump", { volume: 0.5 });
-        }
+      if (!soundOptions.isMuted()) {
+        k.play("jump", { volume: 0.5 });
       }
     }
   });
