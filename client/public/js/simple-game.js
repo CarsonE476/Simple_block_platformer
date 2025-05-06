@@ -36,7 +36,8 @@ const SimpleGame = {
   }
 };
 
-// Use SimpleGame object instead of global variables
+// Access the SimpleGame object properties directly throughout the code
+// Define variables to use in the rest of the code
 let gameRunning = false; // This is for compatibility with the rest of the code
 let playerX = 100;
 let playerY = 500;
@@ -59,8 +60,8 @@ let platforms = [];
 let enemies = [];
 let coins = [];
 let goalFlag = null;
-let gameScore = 0; // renamed from score to avoid conflict
-let currentLevel = 1; // renamed from level to avoid conflict
+let gameScore = 0; // use this instead of "score"
+let currentLevel = 1; // current game level
 let maxLevel = 3;
 let keyStates = {
   left: false,
@@ -259,15 +260,15 @@ function loadLevel(levelIndex) {
   velocityY = 0;
   
   // Load level data
-  const currentLevel = gameLevels[levelIndex];
-  platforms = currentLevel.platforms;
-  enemies = currentLevel.enemies.map(enemy => ({
+  const levelData = gameLevels[levelIndex];
+  platforms = levelData.platforms;
+  enemies = levelData.enemies.map(enemy => ({
     ...enemy,
     startX: enemy.x,
     direction: 1
   }));
-  coins = currentLevel.coins;
-  goalFlag = currentLevel.flag;
+  coins = levelData.coins;
+  goalFlag = levelData.flag;
   
   console.log("Loaded level", currentLevel, "with", platforms.length, "platforms,", 
               enemies.length, "enemies and", coins.length, "coins");
