@@ -284,45 +284,49 @@ function initGame(container, soundOptions) {
   // Set up gravity - using the gravity config in kaboom initialization instead
   // k.gravity(2000); - This was causing errors
   
-  // Define player movement with arrow keys support
-  k.onKeyDown(["left", "ArrowLeft"], () => {
-    const player = k.get("player")[0];
-    if (player) {
-      player.move(-300, 0);
-    }
-  });
-
-  k.onKeyDown(["right", "ArrowRight"], () => {
-    const player = k.get("player")[0];
-    if (player) {
-      player.move(300, 0);
-    }
-  });
-
-  k.onKeyPress(["space", "ArrowUp", " "], () => {
-    const player = k.get("player")[0];
-    if (player && player.isGrounded()) {
-      player.jump(650);
-      if (!soundOptions.isMuted()) {
-        k.play("jump", {
-          volume: 0.5,
-        });
-      }
-    }
-  });
-  
-  // Add occasional debug log to help track player status (once per second)
+  // Set up player controls in the update loop - this is more reliable
+  // Add movement debugging
   let lastLogTime = 0;
+  const moveSpeed = 300;
+  const jumpForce = 650;
+  
+  // Use onUpdate for continuous movement
   k.onUpdate(() => {
+    const player = k.get("player")[0];
     const now = Date.now();
-    if (now - lastLogTime > 1000) { // Only log once per second
-      const player = k.get("player")[0];
+    
+    // Only log occasionally to prevent console spam
+    if (now - lastLogTime > 1000) {
       if (player) {
-        console.log("Player found at position:", player.pos);
+        console.log("Player at:", player.pos.x, player.pos.y, "Grounded:", player.isGrounded ? player.isGrounded() : "N/A");
       } else {
-        console.log("Player not found!");
+        console.log("Player not found in scene!");
       }
       lastLogTime = now;
+    }
+    
+    // If player exists, handle movement
+    if (player) {
+      // Left/Right movement
+      if (k.isKeyDown("left") || k.isKeyDown("ArrowLeft")) {
+        player.move(-moveSpeed, 0);
+        console.log("Moving left");
+      }
+      
+      if (k.isKeyDown("right") || k.isKeyDown("ArrowRight")) {
+        player.move(moveSpeed, 0);
+        console.log("Moving right");
+      }
+      
+      // Jumping
+      if ((k.isKeyPressed("space") || k.isKeyPressed("ArrowUp") || k.isKeyPressed(" ")) && 
+          player.isGrounded && player.isGrounded()) {
+        player.jump(jumpForce);
+        console.log("Jumping!");
+        if (!soundOptions.isMuted()) {
+          k.play("jump", { volume: 0.5 });
+        }
+      }
     }
   });
 
