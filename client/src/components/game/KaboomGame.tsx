@@ -1,10 +1,16 @@
 import { useEffect, useRef } from "react";
 import { useAudio } from "@/lib/stores/useAudio";
 
-// Define the platformerGame type on the window object
+// Define the game implementations on the window object
 declare global {
   interface Window {
+    // Original Kaboom implementation
     platformerGame: {
+      init: (container: HTMLElement, soundOptions: any) => any;
+      destroy: () => void;
+    };
+    // New simple vanilla JS implementation
+    simplePlatformerGame: {
       init: (container: HTMLElement, soundOptions: any) => any;
       destroy: () => void;
     };
@@ -34,17 +40,35 @@ const KaboomGame = () => {
       isMuted: () => isMuted,
     };
     
-    // Wait for platformerGame to be available
+    // Add script tag to ensure our simple implementation is loaded
+    const scriptElement = document.createElement('script');
+    scriptElement.src = '/js/simple-game.js';
+    scriptElement.async = true;
+    document.body.appendChild(scriptElement);
+    
+    console.log("Loading simple game implementation...");
+    
+    // Wait for the simple game implementation to be available
     const initInterval = setInterval(() => {
-      if (window.platformerGame) {
+      if (window.simplePlatformerGame) {
         clearInterval(initInterval);
         
         try {
-          // Initialize the game using the JavaScript implementation
-          window.platformerGame.init(container, soundOptions);
-          console.log("Game initialized successfully");
+          // Initialize the game using our vanilla JS implementation
+          window.simplePlatformerGame.init(container, soundOptions);
+          console.log("Simple platformer game initialized successfully");
         } catch (error) {
-          console.error("Error initializing game:", error);
+          console.error("Error initializing simple game:", error);
+          
+          // Fallback to original implementation if available
+          if (window.platformerGame) {
+            try {
+              window.platformerGame.init(container, soundOptions);
+              console.log("Fallback to original game implementation");
+            } catch (fallbackError) {
+              console.error("Error initializing fallback game:", fallbackError);
+            }
+          }
         }
       }
     }, 100);
@@ -52,12 +76,26 @@ const KaboomGame = () => {
     // Clean up when component unmounts
     return () => {
       clearInterval(initInterval);
-      if (window.platformerGame) {
+      
+      // Clean up script tag
+      if (scriptElement.parentNode) {
+        scriptElement.parentNode.removeChild(scriptElement);
+      }
+      
+      // Clean up game instance
+      if (window.simplePlatformerGame) {
+        try {
+          window.simplePlatformerGame.destroy();
+          console.log("Simple game destroyed successfully");
+        } catch (error) {
+          console.error("Error destroying simple game:", error);
+        }
+      } else if (window.platformerGame) {
         try {
           window.platformerGame.destroy();
-          console.log("Game destroyed successfully");
+          console.log("Original game destroyed successfully");
         } catch (error) {
-          console.error("Error destroying game:", error);
+          console.error("Error destroying original game:", error);
         }
       }
     };
