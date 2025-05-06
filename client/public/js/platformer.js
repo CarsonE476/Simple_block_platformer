@@ -251,10 +251,14 @@ const PlatformerGame = {
       // Position player on the first platform of level 3
       this.player.x = 100;
       this.player.y = 350; // Just above the first platform in level 3
+    } else if (levelIndex === 0) { // Level 1
+      // Position player directly on the first platform of level 1
+      this.player.x = 100;
+      this.player.y = 560; // 40 pixels above the platform at y=600 (player height = 40)
     } else {
       // Default starting position for other levels
       this.player.x = 100;
-      this.player.y = 500;
+      this.player.y = 480; // 20 pixels above level 2 platform at y=500
     }
     
     // Load level data
@@ -369,14 +373,23 @@ const PlatformerGame = {
   
   // Check if player is on the ground
   checkGroundContact: function() {
+    // First check for direct ground contact
+    const playerBottom = this.player.y + this.player.height/2;
+    
     for (const platform of this.objects.platforms) {
-      if (this.player.y + this.player.height/2 >= platform.y && 
-          this.player.y + this.player.height/2 <= platform.y + 5 &&
-          this.player.x + this.player.width/2 - 5 >= platform.x && 
-          this.player.x - this.player.width/2 + 5 <= platform.x + platform.width) {
+      // Check if player is standing on a platform
+      // More tolerant collision detection just for ground checks
+      if (playerBottom >= platform.y - 2 && // Small tolerance to account for floating point
+          playerBottom <= platform.y + 10 && // More forgiving downward check
+          this.player.x + this.player.width/2 - 10 >= platform.x && 
+          this.player.x - this.player.width/2 + 10 <= platform.x + platform.width) {
+        
+        // Debug log for ground contact
+        console.log("Player on ground, platform y:", platform.y, "player bottom:", playerBottom);
         return true;
       }
     }
+    
     return false;
   },
   
@@ -385,12 +398,43 @@ const PlatformerGame = {
     // Reset grounded state
     this.player.isOnGround = false;
     
+    // Priority for platform collisions - first check for landing on top of platforms
+    // This is the most important for platformer games
+    const playerBottom = this.player.y + this.player.height/2;
+    const playerTop = this.player.y - this.player.height/2;
+    const playerLeft = this.player.x - this.player.width/2;
+    const playerRight = this.player.x + this.player.width/2;
+    
+    // First check for ground landings - this is the priority in platformers
     for (const platform of this.objects.platforms) {
+      // Check if player is falling and close to the top of a platform
+      if (this.player.velocityY > 0 && 
+          playerBottom >= platform.y - 5 && 
+          playerBottom <= platform.y + 10 &&
+          playerRight - 5 >= platform.x && 
+          playerLeft + 5 <= platform.x + platform.width) {
+        
+        // Player is landing on platform
+        this.player.y = platform.y - this.player.height/2;
+        this.player.velocityY = 0;
+        this.player.isOnGround = true;
+        this.player.isJumping = false;
+        
+        // Log landing on platform for debugging
+        console.log("Landing on platform");
+      }
+    }
+    
+    // Then check for side and bottom collisions
+    for (const platform of this.objects.platforms) {
+      // Skip if we're already on ground (don't need horizontal collision checks when we just landed)
+      if (this.player.isOnGround) continue;
+      
       // Calculate the overlap between player and platform
-      const overlapX = Math.min(this.player.x + this.player.width/2, platform.x + platform.width) - 
-                       Math.max(this.player.x - this.player.width/2, platform.x);
-      const overlapY = Math.min(this.player.y + this.player.height/2, platform.y + platform.height) - 
-                       Math.max(this.player.y - this.player.height/2, platform.y);
+      const overlapX = Math.min(playerRight, platform.x + platform.width) - 
+                       Math.max(playerLeft, platform.x);
+      const overlapY = Math.min(playerBottom, platform.y + platform.height) - 
+                       Math.max(playerTop, platform.y);
       
       // Check if there's a collision (both overlaps must be positive)
       if (overlapX > 0 && overlapY > 0) {
@@ -400,21 +444,15 @@ const PlatformerGame = {
           if (this.player.x < platform.x) {
             // Collision from left
             this.player.x = platform.x - this.player.width/2;
-            this.player.velocityX = Math.min(0, this.player.velocityX);
+            this.player.velocityX = 0; // Stop completely to prevent slipping
           } else {
             // Collision from right
             this.player.x = platform.x + platform.width + this.player.width/2;
-            this.player.velocityX = Math.max(0, this.player.velocityX);
+            this.player.velocityX = 0; // Stop completely to prevent slipping
           }
         } else {
-          // Vertical collision (top/bottom)
-          if (this.player.y < platform.y) {
-            // Collision from top - player lands on platform
-            this.player.y = platform.y - this.player.height/2;
-            this.player.velocityY = 0;
-            this.player.isOnGround = true;
-            this.player.isJumping = false;
-          } else {
+          // Vertical collision (only for hitting head now, since top collisions are handled above)
+          if (this.player.y > platform.y) {
             // Collision from bottom - player hits head
             this.player.y = platform.y + platform.height + this.player.height/2;
             this.player.velocityY = Math.max(0, this.player.velocityY);
@@ -423,21 +461,8 @@ const PlatformerGame = {
       }
     }
     
-    // More forgiving top collision detection for better gameplay
-    for (const platform of this.objects.platforms) {
-      if (this.player.velocityY > 0 && 
-          this.player.y + this.player.height/2 >= platform.y && 
-          this.player.y <= platform.y &&
-          this.player.x + this.player.width/2 - 5 >= platform.x && 
-          this.player.x - this.player.width/2 + 5 <= platform.x + platform.width) {
-        
-        // Player is landing on platform
-        this.player.y = platform.y - this.player.height/2;
-        this.player.velocityY = 0;
-        this.player.isOnGround = true;
-        this.player.isJumping = false;
-      }
-    }
+    // Set the ground state based on our collision detection
+    this.player.isOnGround = this.player.isOnGround || this.checkGroundContact();
   },
   
   // Update enemies
