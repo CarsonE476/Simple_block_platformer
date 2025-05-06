@@ -242,11 +242,20 @@ const PlatformerGame = {
   
   // Load a level
   loadLevel: function(levelIndex) {
-    // Reset player position
-    this.player.x = 100;
-    this.player.y = 500;
+    // Reset player velocities first
     this.player.velocityY = 0;
     this.player.velocityX = 0;
+    
+    // Set appropriate starting position based on level
+    if (levelIndex === 2) { // Level 3
+      // Position player on the first platform of level 3
+      this.player.x = 100;
+      this.player.y = 350; // Just above the first platform in level 3
+    } else {
+      // Default starting position for other levels
+      this.player.x = 100;
+      this.player.y = 500;
+    }
     
     // Load level data
     const level = this.levels[levelIndex];
@@ -502,6 +511,10 @@ const PlatformerGame = {
       
       // Next level or win
       this.stats.level++;
+      
+      // Log level completion and next level
+      console.log(`Completed level ${this.stats.level - 1}, moving to level ${this.stats.level}`);
+      
       if (this.stats.level <= this.stats.maxLevel) {
         this.loadLevel(this.stats.level - 1);
       } else {
