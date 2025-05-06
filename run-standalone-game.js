@@ -1,18 +1,18 @@
-// This script directly opens the HTML file in the default browser without a server
-// Using ES modules syntax to match the project's setup
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+// This script directly opens the game launcher HTML file in the default browser
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
 
-// Get the directory name in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const launcherPath = path.join(__dirname, 'game-launcher.html');
+const gamePath = path.join(__dirname, 'platformer-game.html');
 
-const htmlPath = path.join(__dirname, 'platformer-game.html');
+// Check if necessary files exist
+if (!fs.existsSync(launcherPath)) {
+  console.error('Error: game-launcher.html not found');
+  process.exit(1);
+}
 
-// Check if platformer-game.html exists
-if (!fs.existsSync(htmlPath)) {
+if (!fs.existsSync(gamePath)) {
   console.error('Error: platformer-game.html not found');
   process.exit(1);
 }
@@ -23,23 +23,23 @@ const platform = process.platform;
 
 if (platform === 'win32') {
   // Windows
-  command = `start "" "${htmlPath}"`;
+  command = `start "" "${launcherPath}"`;
 } else if (platform === 'darwin') {
   // macOS
-  command = `open "${htmlPath}"`;
+  command = `open "${launcherPath}"`;
 } else {
   // Linux
-  command = `xdg-open "${htmlPath}"`;
+  command = `xdg-open "${launcherPath}"`;
 }
 
-console.log('Opening platformer-game.html in your default browser...');
+console.log('Opening game launcher in your default browser...');
 exec(command, (error) => {
   if (error) {
     console.error(`Error opening file: ${error.message}`);
-    console.log('\nAlternatively, you can open the file manually:');
-    console.log(`- Navigate to: ${htmlPath}`);
+    console.log('\nAlternatively, you can open the files manually:');
+    console.log(`- Navigate to: ${launcherPath} or ${gamePath}`);
     console.log('- Double-click the file to open it in your browser');
   } else {
-    console.log('Game launched successfully!');
+    console.log('Game launcher opened successfully!');
   }
 });

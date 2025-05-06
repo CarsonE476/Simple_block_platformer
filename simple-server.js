@@ -1,23 +1,17 @@
-// Using ES modules syntax to match the project's setup
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-
-// Get the directory name in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Simple CommonJS server for the standalone game
+const express = require('express');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve the platformer game directly
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'platformer-game.html'));
-});
-
 // Serve static files from the current directory
 app.use(express.static(__dirname));
+
+// Serve the game launcher as the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'game-launcher.html'));
+});
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
