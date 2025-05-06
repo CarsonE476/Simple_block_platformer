@@ -251,20 +251,28 @@ const PlatformerGame = {
     this.player.velocityY = 0;
     this.player.velocityX = 0;
     
-    // Set appropriate starting position based on level
+    // Set level-specific starting coordinates to ensure player is on solid ground
+    let startX = 100;
+    let startY;
+    
+    // Find the correct starting position based on level data
     if (levelIndex === 2) { // Level 3
-      // Position player on the first platform of level 3
-      this.player.x = 100;
-      this.player.y = 350; // Just above the first platform in level 3
+      // First platform for level 3 is at y=400, player height is 40, so position at 380
+      startY = 380;
     } else if (levelIndex === 0) { // Level 1
-      // Position player directly on the first platform of level 1
-      this.player.x = 100;
-      this.player.y = 560; // 40 pixels above the platform at y=600 (player height = 40)
-    } else {
-      // Default starting position for other levels
-      this.player.x = 100;
-      this.player.y = 480; // 20 pixels above level 2 platform at y=500
+      // First platform for level 1 is at y=600, player height is 40, so position at 580
+      startY = 580;
+    } else { // Level 2
+      // First platform for level 2 is at y=600, player height is 40, so position at 580
+      startY = 580;
     }
+    
+    // Apply the starting coordinates
+    this.player.x = startX;
+    this.player.y = startY;
+    
+    // Debug log the starting position
+    console.log(`Setting player position for level ${levelIndex + 1}: (${startX}, ${startY})`);
     
     // Load level data
     const level = this.levels[levelIndex];
@@ -378,23 +386,29 @@ const PlatformerGame = {
   
   // Check if player is on the ground
   checkGroundContact: function() {
-    // First check for direct ground contact
+    // Calculate player's bottom position
     const playerBottom = this.player.y + this.player.height/2;
+    const playerLeft = this.player.x - this.player.width/2 + 5; // 5px inset for more accurate detection
+    const playerRight = this.player.x + this.player.width/2 - 5; 
     
+    // Check each platform for ground contact
     for (const platform of this.objects.platforms) {
-      // Check if player is standing on a platform
-      // More tolerant collision detection just for ground checks
-      if (playerBottom >= platform.y - 2 && // Small tolerance to account for floating point
-          playerBottom <= platform.y + 10 && // More forgiving downward check
-          this.player.x + this.player.width/2 - 10 >= platform.x && 
-          this.player.x - this.player.width/2 + 10 <= platform.x + platform.width) {
+      // More generous check for ground contact
+      if (Math.abs(playerBottom - platform.y) <= 5 && // Very close to platform top (5px tolerance)
+          playerRight >= platform.x && 
+          playerLeft <= platform.x + platform.width) {
         
-        // Debug log for ground contact
-        console.log("Player on ground, platform y:", platform.y, "player bottom:", playerBottom);
+        // If player is very close to platform top and horizontally overlapping
+        // Immediately snap to platform top to avoid "floaty" behavior
+        this.player.y = platform.y - this.player.height/2;
+        
+        // Log ground contact for debugging
+        console.log("Ground contact: platform y:", platform.y, "player bottom was:", playerBottom);
         return true;
       }
     }
     
+    // If we reach here, no ground contact was found
     return false;
   },
   
