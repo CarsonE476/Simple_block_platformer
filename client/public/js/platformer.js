@@ -233,6 +233,11 @@ const PlatformerGame = {
   
   // Start the game
   startGame: function() {
+    // Clean up any win screen animation
+    if (this.winScreenActive) {
+      this.winScreenActive = false;
+    }
+    
     this.isRunning = true;
     this.stats.level = 1;
     this.stats.score = 0;
@@ -552,22 +557,85 @@ const PlatformerGame = {
   showWinScreen: function() {
     this.isRunning = false;
     
-    // Draw background
-    this.context.fillStyle = 'black';
-    this.context.fillRect(0, 0, this.width, this.height);
+    // Make a more celebratory win screen
+    this.winScreenTimer = 0;
+    this.winScreenActive = true;
     
-    // Draw win text
-    this.context.fillStyle = 'white';
-    this.context.font = '60px Arial';
-    this.context.textAlign = 'center';
-    this.context.fillText('YOU WIN!', this.width/2, 300);
+    // Create win screen animation loop
+    const animateWinScreen = () => {
+      if (!this.winScreenActive) return;
+      
+      this.winScreenTimer += 0.02;
+      
+      // Draw starry background (slowly moving)
+      this.context.fillStyle = '#001133';
+      this.context.fillRect(0, 0, this.width, this.height);
+      
+      // Draw stars
+      this.context.fillStyle = 'white';
+      for (let i = 0; i < 100; i++) {
+        const x = (Math.sin(i * 0.1 + this.winScreenTimer) + 1) * this.width / 2;
+        const y = (Math.cos(i * 0.17 + this.winScreenTimer) + 1) * this.height / 2;
+        const size = Math.sin(this.winScreenTimer + i) * 2 + 3;
+        this.context.beginPath();
+        this.context.arc(x, y, size, 0, Math.PI * 2);
+        this.context.fill();
+      }
+      
+      // Draw win text with pulsing effect
+      const pulse = Math.sin(this.winScreenTimer * 3) * 0.2 + 0.8;
+      const rainbowHue = (this.winScreenTimer * 50) % 360;
+      
+      // Draw colorful win text
+      this.context.save();
+      this.context.shadowColor = 'rgba(255, 255, 0, 0.8)';
+      this.context.shadowBlur = 20 + Math.sin(this.winScreenTimer * 5) * 10;
+      this.context.fillStyle = `hsl(${rainbowHue}, 100%, 60%)`;
+      this.context.font = `${Math.floor(60 * pulse)}px Arial Bold`;
+      this.context.textAlign = 'center';
+      this.context.fillText('CONGRATULATIONS!', this.width/2, 200);
+      this.context.fillText('YOU WIN!', this.width/2, 280);
+      this.context.restore();
+      
+      // Draw score with a glow effect
+      this.context.save();
+      this.context.shadowColor = 'rgba(0, 255, 255, 0.5)';
+      this.context.shadowBlur = 10;
+      this.context.fillStyle = 'white';
+      this.context.font = '32px Arial';
+      this.context.fillText(`Final Score: ${this.stats.score}`, this.width/2, 350);
+      
+      // Show collected coins
+      const coinCount = this.levels.reduce((count, level) => {
+        return count + level.coins.length;
+      }, 0);
+      
+      this.context.fillText(`You collected ${this.stats.score / 10} of ${coinCount} coins`, this.width/2, 400);
+      this.context.restore();
+      
+      // Draw restart prompt with pulsing effect
+      const promptPulse = Math.sin(this.winScreenTimer * 2) * 0.2 + 0.8;
+      this.context.fillStyle = 'rgba(255, 255, 255, ' + promptPulse + ')';
+      this.context.font = '30px Arial';
+      this.context.fillText('Press SPACE to play again', this.width/2, 500);
+      
+      // Continue animation
+      requestAnimationFrame(animateWinScreen);
+    };
     
-    // Draw score
-    this.context.font = '30px Arial';
-    this.context.fillText(`Final Score: ${this.stats.score}`, this.width/2, 380);
+    // Play win sound multiple times for celebration
+    if (this.sound && !this.sound.isMuted()) {
+      try {
+        this.sound.playSuccess();
+        setTimeout(() => this.sound.playSuccess(), 200);
+        setTimeout(() => this.sound.playSuccess(), 400);
+      } catch (e) {
+        console.error("Error playing success sound:", e);
+      }
+    }
     
-    // Draw restart prompt
-    this.context.fillText('Press SPACE to play again', this.width/2, 450);
+    // Start animation
+    animateWinScreen();
   },
   
   // Render game
@@ -624,6 +692,12 @@ const PlatformerGame = {
   destroy: function() {
     console.log("Destroying platformer game and removing event listeners");
     this.isRunning = false;
+    
+    // Make sure to stop the win screen animation
+    if (this.winScreenActive) {
+      this.winScreenActive = false;
+    }
+    
     window.removeEventListener('keydown', this.handleKeyDown.bind(this));
     window.removeEventListener('keyup', this.handleKeyUp.bind(this));
     
