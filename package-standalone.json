@@ -1,0 +1,13 @@
+{
+  "name": "platformer-game-standalone",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Standalone platformer game server",
+  "main": "simple-server.js",
+  "scripts": {
+    "start": "node simple-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

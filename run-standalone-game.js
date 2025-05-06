@@ -1,7 +1,13 @@
 // This script directly opens the HTML file in the default browser without a server
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+// Using ES modules syntax to match the project's setup
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
+
+// Get the directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const htmlPath = path.join(__dirname, 'platformer-game.html');
 
