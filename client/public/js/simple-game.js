@@ -1,21 +1,55 @@
 // Simple platformer game using vanilla JavaScript
 // This avoids any potential issues with Kaboom.js
 
-// Game state and objects
-let gameRunning = false;
-let player = null;
+// Game state and objects - using namespaced variables to avoid conflicts
+const SimpleGame = {
+  gameRunning: false,
+  player: null,
+  playerX: 100,
+  playerY: 500,
+  playerSpeed: 5,
+  playerJumping: false,
+  gravity: 0.7,  // Higher gravity value for more weight
+  velocityY: 0,
+  velocityX: 0,  // Horizontal velocity for smoother movement
+  friction: 0.8, // Friction to slow down the player
+  terminalVelocity: 12, // Max falling speed
+  jumpStrength: 15, // Initial jump velocity
+  playerOnGround: false, // Track if player is on ground
+  playerHealth: 3, // Player health
+  gameContainer: null,
+  gameCanvas: null,
+  gameContext: null,
+  gameWidth: 1280,
+  gameHeight: 720,
+  platforms: [],
+  enemies: [],
+  coins: [],
+  goalFlag: null,
+  gameScore: 0,
+  currentLevel: 1,
+  maxLevel: 3,
+  keyStates: {
+    left: false,
+    right: false,
+    up: false
+  }
+};
+
+// Use SimpleGame object instead of global variables
+let gameRunning = false; // This is for compatibility with the rest of the code
 let playerX = 100;
 let playerY = 500;
 let playerSpeed = 5;
 let playerJumping = false;
-let gravity = 0.7;  // Higher gravity value for more weight
+let gravity = 0.7;
 let velocityY = 0;
-let velocityX = 0;  // Horizontal velocity for smoother movement
-let friction = 0.8; // Friction to slow down the player
-let terminalVelocity = 12; // Max falling speed
-let jumpStrength = 15; // Initial jump velocity
-let playerOnGround = false; // Track if player is on ground
-let playerHealth = 3; // Player health
+let velocityX = 0;
+let friction = 0.8;
+let terminalVelocity = 12;
+let jumpStrength = 15;
+let playerOnGround = false;
+let playerHealth = 3;
 let gameContainer = null;
 let gameCanvas = null;
 let gameContext = null;
@@ -25,8 +59,8 @@ let platforms = [];
 let enemies = [];
 let coins = [];
 let goalFlag = null;
-let score = 0;
-let level = 1;
+let gameScore = 0; // renamed from score to avoid conflict
+let currentLevel = 1; // renamed from level to avoid conflict
 let maxLevel = 3;
 let keyStates = {
   left: false,
@@ -211,9 +245,9 @@ function showMenu() {
 // Start the game
 function startGame() {
   gameRunning = true;
-  level = 1;
-  score = 0;
-  loadLevel(level - 1);
+  currentLevel = 1; // changed from level
+  gameScore = 0;    // changed from score
+  loadLevel(currentLevel - 1);
   gameLoop();
 }
 
@@ -235,7 +269,7 @@ function loadLevel(levelIndex) {
   coins = currentLevel.coins;
   goalFlag = currentLevel.flag;
   
-  console.log("Loaded level", level, "with", platforms.length, "platforms,", 
+  console.log("Loaded level", currentLevel, "with", platforms.length, "platforms,", 
               enemies.length, "enemies and", coins.length, "coins");
 }
 
@@ -323,7 +357,7 @@ function update() {
   // Check if player fell off the screen
   if (playerY > gameHeight + 100) {
     // Restart level
-    loadLevel(level - 1);
+    loadLevel(currentLevel - 1);
   }
   
   // Update enemies with physics
@@ -429,7 +463,7 @@ function checkCoinCollisions() {
         Math.abs(playerX - coin.x) < 25 && 
         Math.abs(playerY - coin.y) < 25) {
       coin.collected = true;
-      score += 10;
+      gameScore += 10;
       
       if (soundManager && !soundManager.isMuted()) {
         // Play coin sound
@@ -456,7 +490,7 @@ function checkEnemyCollisions() {
           console.error("Error playing hit sound:", e);
         }
       }
-      loadLevel(level - 1);
+      loadLevel(currentLevel - 1);
       break;
     }
   }
@@ -476,9 +510,9 @@ function checkFlagCollision() {
     }
     
     // Next level or win
-    level++;
-    if (level <= maxLevel) {
-      loadLevel(level - 1);
+    currentLevel++;
+    if (currentLevel <= maxLevel) {
+      loadLevel(currentLevel - 1);
     } else {
       showWinScreen();
     }
@@ -501,7 +535,7 @@ function showWinScreen() {
   
   // Draw score
   gameContext.font = '30px Arial';
-  gameContext.fillText(`Final Score: ${score}`, gameWidth/2, 380);
+  gameContext.fillText(`Final Score: ${gameScore}`, gameWidth/2, 380);
   
   // Draw restart prompt
   gameContext.fillText('Press SPACE to play again', gameWidth/2, 450);
@@ -548,8 +582,8 @@ function render() {
   gameContext.fillStyle = 'white';
   gameContext.font = '24px Arial';
   gameContext.textAlign = 'left';
-  gameContext.fillText(`Level: ${level}`, 20, 30);
-  gameContext.fillText(`Score: ${score}`, 20, 60);
+  gameContext.fillText(`Level: ${currentLevel}`, 20, 30);
+  gameContext.fillText(`Score: ${gameScore}`, 20, 60);
 }
 
 // Clean up function
