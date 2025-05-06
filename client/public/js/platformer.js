@@ -117,7 +117,7 @@ const PlatformerGame = {
       ],
       enemies: [
         { x: 300, y: 450, width: 30, height: 30, moveRange: 60, speed: 4 },
-        { x: 600, y: 250, width: 30, height: 30, moveRange: 50, speed: 4 },
+        // Second enemy removed per user request
         { x: 1150, y: 350, width: 30, height: 30, moveRange: 100, speed: 4 }
       ],
       coins: [
