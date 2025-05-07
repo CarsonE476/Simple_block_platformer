@@ -9,13 +9,17 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the current directory and the game-files directory
+// Serve static files from the current directory
 app.use(express.static(__dirname));
-app.use('/game-files', express.static(join(__dirname, 'game-files')));
 
 // Serve the index.html file as the main page
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
+});
+
+// Explicitly serve the platformer game
+app.get('/platformer-game.html', (req, res) => {
+  res.sendFile(join(__dirname, 'platformer-game.html'));
 });
 
 // Start the server
