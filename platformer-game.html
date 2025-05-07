@@ -63,8 +63,26 @@
   <div id="game-container">
     <div id="audio-controls">Sound: ON</div>
   </div>
+  
+  <!-- Debugging element to display errors -->
+  <div id="debug-output" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; max-width: 80%; z-index: 1000; font-family: monospace; white-space: pre-wrap;"></div>
 
   <script>
+  // Debug helpers
+  window.onerror = function(message, source, lineno, colno, error) {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.textContent += `ERROR: ${message}\n at line ${lineno}:${colno}\n`;
+    console.error(message, error);
+    return true;
+  };
+  
+  function debugLog(message) {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.textContent += message + "\n";
+    console.log(message);
+  }
+  
+  debugLog("Debug initialized");
     // Game code
     const PlatformerGame = {
       // Game state
