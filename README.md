@@ -20,7 +20,7 @@ There are several ways to run the game:
 
 1. Simply open one of these files in your browser:
    - `index.html` - The main game launcher (recommended)
-   - `platformer-game.html` - Opens the game directly
+   - `game-files/platformer-game.html` - Opens the game directly
    
 ### Option 3: Deploy to GitHub Pages
 
@@ -28,9 +28,10 @@ This game is designed to work perfectly with GitHub Pages:
 
 1. Create a new GitHub repository
 2. Upload these files to the repository:
-   - `index.html`
-   - `platformer-game.html`
-   - `README.md`
+   - `index.html` (in the root directory)
+   - The entire `game-files` folder containing:
+     - `platformer-game.html`
+     - Other game assets
 3. Enable GitHub Pages in your repository settings
 4. Your game will be live at: `https://your-username.github.io/repository-name/`
 

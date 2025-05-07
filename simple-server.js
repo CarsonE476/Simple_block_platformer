@@ -9,8 +9,9 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the current directory
+// Serve static files from the current directory and the game-files directory
 app.use(express.static(__dirname));
+app.use('/game-files', express.static(join(__dirname, 'game-files')));
 
 // Serve the index.html file as the main page
 app.get('/', (req, res) => {
