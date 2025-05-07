@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platformer Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #222;
+      font-family: Arial, sans-serif;
+    }
+    
+    #game-container {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      border: 4px solid #444;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    
+    #audio-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      z-index: 100;
+    }
+    
+    #debug-output {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      max-width: 80%;
+      z-index: 1000;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    @media (max-width: 1300px) {
+      #game-container {
+        width: 960px;
+        height: 540px;
+      }
+    }
+    
+    @media (max-width: 980px) {
+      #game-container {
+        width: 640px;
+        height: 360px;
+      }
+    }
+    
+    @media (max-width: 660px) {
+      #game-container {
+        width: 320px;
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="audio-controls">Sound: ON</div>
+  </div>
+  
+  <div id="debug-output"></div>
+
+  <script>
+    // Debug helpers
+    function debugLog(message) {
+      const debugOutput = document.getElementById('debug-output');
+      debugOutput.textContent += message + "\n";
+      console.log(message);
+      
+      // Auto-scroll to bottom
+      debugOutput.scrollTop = debugOutput.scrollHeight;
+    }
+    
+    window.onerror = function(message, source, lineno, colno, error) {
+      debugLog(`ERROR: ${message}\n at line ${lineno}:${colno}`);
+      console.error(message, error);
+      return true;
+    };
+    
+    debugLog("Initializing game...");
+    
+    // Game code
+    const PlatformerGame = {
+      // Game state
+      isRunning: false,
+      winScreenActive: false,
+      winScreenTimer: 0,
+      container: null,
+      
+      // Game objects
+      player: {
+        x: 100,
+        y: 580,
+        width: 40,
+        height: 40,
+        velocityX: 0,
+        velocityY: 0,
+        speed: 8,
+        isOnGround: false,
+        isJumping: false
+      },
+      
+      // Game statistics
+      stats: {
+        level: 1,
+        score: 0,
+        maxLevel: 3
+      },
+      
+      // Game objects
+      objects: {
+        platforms: [],
+        enemies: [],
+        coins: [],
+        goalFlag: null
+      },
+      
+      // Physics settings
+      physics: {
+        gravity: 0.7,
+        friction: 0.85,
+        jumpStrength: 16,
+        terminalVelocity: 12
+      },
+      
+      // Controls
+      controls: {
+        left: false,
+        right: false,
+        up: false
+      },
+      
+      // Canvas and rendering
+      canvas: null,
+      context: null,
+      container: null,
+      width: 1280,
+      height: 720,
+      
+      // Audio 
+      sound: null,
+      
+      // Level data
+      levels: [
+        // Level 1
+        {
+          platforms: [
+            { x: 0, y: 600, width: 500, height: 40 },
+            { x: 600, y: 500, width: 200, height: 40 },
+            { x: 900, y: 400, width: 200, height: 40 },
+            { x: 1100, y: 600, width: 300, height: 40 }
+          ],
+          enemies: [
+            { x: 700, y: 450, width: 30, height: 30, moveRange: 100, speed: 2 }
+          ],
+          coins: [
+            { x: 300, y: 550, collected: false },
+            { x: 650, y: 450, collected: false },
+            { x: 950, y: 350, collected: false },
+            { x: 1200, y: 550, collected: false }
+          ],
+          flag: { x: 1250, y: 550 }
+        },
+        // Level 2
+        {
+          platforms: [
+            { x: 0, y: 600, width: 300, height: 40 },
+            { x: 350, y: 500, width: 100, height: 20 },
+            { x: 500, y: 400, width: 100, height: 20 },
+            { x: 650, y: 500, width: 100, height: 20 },
+            { x: 800, y: 350, width: 200, height: 40 },
+            { x: 1050, y: 450, width: 250, height: 40 }
+          ],
+          enemies: [
+            { x: 400, y: 450, width: 30, height: 30, moveRange: 50, speed: 3 },
+            { x: 900, y: 300, width: 30, height: 30, moveRange: 80, speed: 3 }
+          ],
+          coins: [
+            { x: 200, y: 550, collected: false },
+            { x: 400, y: 450, collected: false },
+            { x: 550, y: 350, collected: false },
+            { x: 700, y: 450, collected: false },
+            { x: 900, y: 300, collected: false },
+            { x: 1150, y: 400, collected: false }
+          ],
+          flag: { x: 1200, y: 400 }
+        },
+        // Level 3
+        {
+          platforms: [
+            { x: 0, y: 400, width: 200, height: 40 },
+            { x: 250, y: 500, width: 80, height: 20 },
+            { x: 400, y: 400, width: 80, height: 20 },
+            { x: 550, y: 300, width: 80, height: 20 },
+            { x: 700, y: 200, width: 80, height: 20 },
+            { x: 850, y: 300, width: 100, height: 20 },
+            { x: 1000, y: 400, width: 300, height: 40 }
+          ],
+          enemies: [
+            { x: 300, y: 450, width: 30, height: 30, moveRange: 60, speed: 4 },
+            { x: 1150, y: 350, width: 30, height: 30, moveRange: 100, speed: 4 }
+          ],
+          coins: [
+            { x: 150, y: 350, collected: false },
+            { x: 300, y: 450, collected: false },
+            { x: 450, y: 350, collected: false },
+            { x: 600, y: 250, collected: false },
+            { x: 750, y: 150, collected: false },
+            { x: 900, y: 250, collected: false },
+            { x: 1050, y: 350, collected: false },
+            { x: 1200, y: 350, collected: false }
+          ],
+          flag: { x: 1200, y: 350 }
+        }
+      ],
+      
+      // Initialize audio
+      initAudio: function() {
+        debugLog("Initializing audio...");
+        this.isMuted = false;
+        
+        this.hitSound = new Audio();
+        this.successSound = new Audio();
+        
+        // Use inline audio data to avoid path issues
+        this.successSound.src = "data:audio/wav;base64,UklGRg4FAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YQAFAAB/f39/f39/f3+AfH53eHR1fYOKj5KQhHpsX1JSXW+HoLbIz9TQwqaGYjgcBQAGHUl5r9r2/v3wzbmUaEAcBAYaNW2e0/3///fWtod0XnB4eHh4eHh4eHh4eHh4eHh4eHh4eFQzGQ0KCg0ZNFSHmKacjHFcRTQpIic6XIKZ0PL/+OHDn3RQKwsPJTtYeZKlssC+tKCSfmRNMx8QGzRkrNb2/Pz0yaB2TTsdAQASK1V6mLnS2+PcxqmOcVY9LP7gwKiw0PL///////////7x38e0mYJnTDA9TGF2iZyz0vL/////////+NrEp41sUTZXjq7Z+f/////96tbFtaaJZkMaAQILJktshpqvu7Wpmo6BcmJQMxkeMV+ezO/u07mfkYiLnazt///3zbiXemc9KSIqNkVUYGRfU0InFiVXj7XT1+TdvJh4YmBtgqLJ6vz////////jxK6RcVQzHDRXhq3P29/c0cS1oo+Ab2NVRT4xJR0aGRwjMEVVY2ZjWlNNR0E7NjNMfbPu//XOsZqMgHh1d3t/cWddVFNbZnKEnrPF1uHo6+rn4t/Y087LxcPFx8zU2eHq8fj8/v35+Pn8/f3+/f37+/r6+fn5+fn4+Pf29vX19PT09PT09PT09PT09PT09PT09PT09PT09fX19vj5+/38/PjpzKyRc11HNCcfGhUPCQogR21pcmdeT0M0JhYIDjZmmr3FyMjHx8fGxsS3p5d9Zh8BAxAocK3r//nQt5qNgXZvbW91gIuYprG+yMnJsJ+PZEIXKF2EpLOtpqCalsHP8f7/+OXMrI55Z1xURj4zJhoTFBwpPVRocXNycnJva2dlXVVORT0zHws0ZY6mtbW1usPM0dnh4dO3iVAUAx5OdoOQk5OPi46RlJaXmJmbnaChoqKelXtbRTY1M0FFTEpKQTgqQXm0/v/+6L+Qahg4Z4STlJOamZKKeXNsXVdST01LQzw0LCMYCwEqUneKjIyKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi46aoHd1hJCVlpaYn6mxuL/Ey9HZ4env7eLav7GTdlMuDQECEDJccZCkur/Dxb6+x9LZ3OXn3NBxUCULDRovQUxTWV1gY2ZpbG5vcHBwb21qZ2NgWlRMQzktIRMAI1N6nrXBx8vNzc3MzMzLzM3Nzc3Ny8nGw72skm5MJQsbO1+Gnq21vcHDw8PDw8PDw8PDw8PCwb+9urnCzdSxjGEvIB4dHR0cHBwcHB0eICQpMDk/RklMTEtIREM+OTUwKiMaEQgDCiNLcJaqt7y+wcPExcbGxsbGxsXFxcTDw8LCwsHAv7++vr2+v8TM1rqIdVVGKAwDAAAAAAAACzBlnr7V4+zy9vj49/X08e7q5uLd2NLMx8C5squko5ubmZiXlpWSjYiDfnhyb2RULwkGDRwyR1ZiZ2pocHd9hYqSmJ2hpKamnJOJfGYDAAAAChUmO1JndXyAf3hya2NhZnKAlqu8x8zLx8bJzM/R0tPU1NXT0tHQz87Nzc3NzMzMzMzKyMbEwsDAvry6ubCijHNaV2d7kZ2stsDFxsOskHJXTk1NTU1NTU1NTU1NTU1NTU1NUVZlcXd4c21lXVRLQ0Jcntr/+d3Op5eBcmljXltYVVFOTpCRkZCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkZGRkZGSnJ6agFlFLBsI";
+        this.hitSound.src = "data:audio/wav;base64,UklGRjAEAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YQwEAACafXRvbGxwd4SWpLGyvbKjjoVyZWBmbXqRrcbc5ezp39LBq5F2XEQvIBsYICk7VnWWsMbUzK6GVhgCBBcsbZnJ6fTw3b+UZTgdHDNTi73f7O/r2rptPhIhTHeqz+Lj18ucWScbQW2n0ezw5MmaTiQiUYa44PX16dCiYi0dTIS35vv88tymXikgUIS04/n68dekYDImWo264/j479eoZTAhT4Cz5fz89dmqaTEfRXqx5/7/+dymYi4iU4e46v7/+d6sYykbQnSs3fj59eG4gEknKliFvOz////77NClcUMrMFaDvfD////969OsflQvMFJ6tvP////761p/uuX////6cYq31//////8ZH6y3/////9QcKrh/////0Voq+L/////N1qk5P////8pT5vl/////xtHk+f/////EkCV6P////8JPpbt/////wE0hu////////AqfMP/////6ixyjNbs7evr7//tz6d4TC0PGjNYi7jYz7+uoo+AeX+NrcLb6vLu4s61mXVVNikrMT9VdI6pvMjR1tfY2NnZ2tvb29zc3dug5P/75L15PxIZMViBr9Xj5N/X0NTf7v348Ofi29PLw7y1sq6qqKWioZ+enZybmpmYlpWTkpCOjYuJh4WEgoGAf39+fXx7e3p5eXh4d3d2dnV1dXV0dHRxbWdjXlpWU1FMRj85NDAtKikkHxoXEg8NBwgDA//6+/vwQpre9/bx7ezr6+vq8ff538+xk3NbQzIlGhEKBAIGDRcqP1VmcnhzZlE3IAkEECpUjMDn9fLs5OPj4uHh4eTp8PlnSYWuzd/o6Ojk3NO9pI10YGJzj7HQ3NrGnHVWPS84TWed0/P8/ffv4tHBtq2mnp6gqbTC0NXRxq2Nb1FKV3Ge0vr///zkxJZvUDgwPmSRu+f6+OvXuZmGd2xoaW56jqCwvMfPz8fU7//xz65/RxYLIU+Ixff//+jFkk0QIVeX2P///+bJnWAjEzh0xP////TjwYxYLyNRlef////25siZXS8dQXnG/////O3TrHFBHCJMj+H////67NGiZDYeL12V5v////ry2KlkMBctVo7g////+/DZqWkzFSNDgNT////98d2vcTkXHDFemuj////77dKhYDIZKEqL3P////ju1ahgLBcmS4zh////+e3UpFwlEyNEg9n////67tmsaDUUGzRjoen////36M+fXS8WIUeJ3f////vs0KFbLBYjSYvf////+e3Upl8pEh9AgNX////77deqZS4SHDlvs+7////56c2dYDUfLFOS5f////rt0J9fMBMXL2Oo7P////nr0ahnNBIUKlyf5/////z059CfYDMVGChWluL////99urSpF8wFBgpVZTg////+/Xq0J5dLRAUKFqY4f////369e/nzqmEXz8qKT1fls/1/////vny59W7lmZBLiUyTXyp1/b///////334r6GVTwzNUR0nNLv///////9+e7dxaJ5Sz0xMkd2nNHr///////+/v38+/v7+/v7+/v7";
+        
+        document.getElementById('audio-controls').textContent = `Sound: ${this.isMuted ? 'OFF' : 'ON'}`;
+        debugLog("Audio initialized successfully");
+      },
+      
+      // Initialize the game
+      init: function(container, soundOptions) {
+        debugLog("Initializing game components...");
+        
+        // Store references
+        this.container = container;
+        this.sound = soundOptions;
+        
+        // Create canvas
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.context = this.canvas.getContext('2d');
+        
+        // Add canvas to container
+        container.innerHTML = '';
+        container.appendChild(this.canvas);
+        
+        // Set up event listeners
+        window.addEventListener('keydown', this.handleKeyDown.bind(this));
+        window.addEventListener('keyup', this.handleKeyUp.bind(this));
+        
+        // Show main menu
+        this.showMenu();
+        debugLog("Game initialized successfully");
+      },
+      
+      // Handle key down events
+      handleKeyDown: function(e) {
+        debugLog("Key down: " + e.key);
+        switch(e.key) {
+          case 'ArrowLeft':
+          case 'a':
+          case 'A':
+            this.controls.left = true;
+            break;
+          case 'ArrowRight':
+          case 'd':
+          case 'D':
+            this.controls.right = true;
+            break;
+          case 'ArrowUp':
+          case 'w':
+          case 'W':
+          case ' ':
+            this.controls.up = true;
+            if (!this.isRunning && e.key === ' ') {
+              debugLog("Starting game via spacebar...");
+              this.startGame();
+            }
+            break;
+        }
+      },
+      
+      // Handle key up events
+      handleKeyUp: function(e) {
+        switch(e.key) {
+          case 'ArrowLeft':
+          case 'a':
+          case 'A':
+            this.controls.left = false;
+            break;
+          case 'ArrowRight':
+          case 'd':
+          case 'D':
+            this.controls.right = false;
+            break;
+          case 'ArrowUp':
+          case 'w':
+          case 'W':
+          case ' ':
+            this.controls.up = false;
+            break;
+        }
+      },
+      
+      // Show the main menu
+      showMenu: function() {
+        this.isRunning = false;
+        
+        // Draw background
+        this.context.fillStyle = 'black';
+        this.context.fillRect(0, 0, this.width, this.height);
+        
+        // Draw title
+        this.context.fillStyle = 'white';
+        this.context.font = '50px Arial';
+        this.context.textAlign = 'center';
+        this.context.fillText('PLATFORMER ADVENTURE', this.width/2, 200);
+        
+        // Draw instructions
+        this.context.font = '25px Arial';
+        this.context.fillText('Use Arrow Keys or WASD to move, Space to jump', this.width/2, 300);
+        
+        // Draw start prompt
+        this.context.font = '30px Arial';
+        this.context.fillText('Press SPACE to start', this.width/2, 400);
+      },
+      
+      // Start the game
+      startGame: function() {
+        // Clean up any win screen animation
+        if (this.winScreenActive) {
+          this.winScreenActive = false;
+        }
+        
+        this.isRunning = true;
+        this.stats.level = 1;
+        this.stats.score = 0;
+        this.loadLevel(this.stats.level - 1);
+        this.gameLoop();
+      },
+      
+      // Load a level
+      loadLevel: function(levelIndex) {
+        debugLog("Loading level " + (levelIndex + 1));
+        // Reset player velocities first
+        this.player.velocityY = 0;
+        this.player.velocityX = 0;
+        
+        // Set level-specific starting coordinates to ensure player is on solid ground
+        let startX = 100;
+        let startY;
+        
+        // Find the correct starting position based on level data
+        if (levelIndex === 2) { // Level 3
+          // First platform for level 3 is at y=400, player height is 40, so position at 380
+          startY = 380;
+        } else if (levelIndex === 0) { // Level 1
+          // First platform for level 1 is at y=600, player height is 40, so position at 580
+          startY = 580;
+        } else { // Level 2
+          // First platform for level 2 is at y=600, player height is 40, so position at 580
+          startY = 580;
+        }
+        
+        // Apply the starting coordinates
+        this.player.x = startX;
+        this.player.y = startY;
+        
+        // Debug log the starting position
+        debugLog(`Setting player position for level ${levelIndex + 1}: (${startX}, ${startY})`);
+        
+        // Load level data
+        const level = this.levels[levelIndex];
+        this.objects.platforms = level.platforms;
+        this.objects.enemies = level.enemies.map(enemy => ({
+          ...enemy,
+          startX: enemy.x,
+          direction: 1
+        }));
+        this.objects.coins = level.coins;
+        this.objects.goalFlag = level.flag;
+        
+        debugLog(`Loaded level ${this.stats.level} with ${this.objects.platforms.length} platforms, ${this.objects.enemies.length} enemies and ${this.objects.coins.length} coins`);
+      },
+      
+      // Main game loop
+      gameLoop: function() {
+        if (!this.isRunning) return;
+        
+        this.update();
+        this.render();
+        
+        requestAnimationFrame(this.gameLoop.bind(this));
+      },
+      
+      // Update game state
+      update: function() {
+        // Check if player is on ground
+        this.player.isOnGround = this.checkGroundContact();
+        
+        // Handle horizontal movement
+        if (this.controls.left) {
+          this.player.velocityX -= this.player.speed * 0.15;
+        } else if (this.controls.right) {
+          this.player.velocityX += this.player.speed * 0.15;
+        } else {
+          // Apply friction when no movement keys are pressed
+          this.player.velocityX *= this.physics.friction;
+        }
+        
+        // Cap horizontal velocity
+        if (this.player.velocityX > this.player.speed) {
+          this.player.velocityX = this.player.speed;
+        }
+        if (this.player.velocityX < -this.player.speed) {
+          this.player.velocityX = -this.player.speed;
+        }
+        
+        // Stop very small movements
+        if (Math.abs(this.player.velocityX) < 0.1) {
+          this.player.velocityX = 0;
+        }
+        
+        // Handle jumping
+        if (this.controls.up && this.player.isOnGround) {
+          this.player.velocityY = -this.physics.jumpStrength;
+          this.player.isJumping = true;
+          
+          if (this.sound && !this.sound.isMuted()) {
+            try {
+              this.sound.playSuccess();
+            } catch (e) {
+              debugLog("Error playing jump sound: " + e.message);
+            }
+          }
+        }
+        
+        // Variable jump height
+        if (!this.controls.up && this.player.velocityY < 0) {
+          this.player.velocityY *= 0.85; // Reduce upward velocity when jump button is released
+        }
+        
+        // Apply gravity
+        this.player.velocityY += this.physics.gravity;
+        
+        // Cap falling speed
+        if (this.player.velocityY > this.physics.terminalVelocity) {
+          this.player.velocityY = this.physics.terminalVelocity;
+        }
+        
+        // Apply velocities to position
+        this.player.x += this.player.velocityX;
+        this.player.y += this.player.velocityY;
+        
+        // Handle collisions
+        this.handleCollisions();
+        
+        // Check boundaries
+        if (this.player.x < this.player.width / 2) {
+          this.player.x = this.player.width / 2;
+          this.player.velocityX *= -0.3; // Slight bounce
+        }
+        if (this.player.x > this.width - this.player.width / 2) {
+          this.player.x = this.width - this.player.width / 2;
+          this.player.velocityX *= -0.3; // Slight bounce
+        }
+        
+        // Check if player fell off screen
+        if (this.player.y > this.height + 100) {
+          this.loadLevel(this.stats.level - 1);
+        }
+        
+        // Update enemies
+        this.updateEnemies();
+        
+        // Check collisions with other objects
+        this.checkCoinCollisions();
+        this.checkEnemyCollisions();
+        this.checkFlagCollision();
+      },
+      
+      // Check if player is on the ground
+      checkGroundContact: function() {
+        // Calculate player's bottom position
+        const playerBottom = this.player.y + this.player.height/2;
+        const playerLeft = this.player.x - this.player.width/2 + 5; // 5px inset for more accurate detection
+        const playerRight = this.player.x + this.player.width/2 - 5; 
+        
+        // Check each platform for ground contact
+        for (const platform of this.objects.platforms) {
+          // More generous check for ground contact
+          if (Math.abs(playerBottom - platform.y) <= 5 && // Very close to platform top (5px tolerance)
+              playerRight >= platform.x && 
+              playerLeft <= platform.x + platform.width) {
+            
+            // If player is very close to platform top and horizontally overlapping
+            // Immediately snap to platform top to avoid "floaty" behavior
+            this.player.y = platform.y - this.player.height/2;
+            
+            // Log ground contact for debugging
+            //debugLog("Ground contact: platform y:" + platform.y + ", player bottom was:" + playerBottom);
+            return true;
+          }
+        }
+        
+        // If we reach here, no ground contact was found
+        return false;
+      },
+      
+      // Handle all collisions
+      handleCollisions: function() {
+        // Reset grounded state
+        this.player.isOnGround = false;
+        
+        // Priority for platform collisions - first check for landing on top of platforms
+        // This is the most important for platformer games
+        const playerBottom = this.player.y + this.player.height/2;
+        const playerTop = this.player.y - this.player.height/2;
+        const playerLeft = this.player.x - this.player.width/2;
+        const playerRight = this.player.x + this.player.width/2;
+        
+        // First check for ground landings - this is the priority in platformers
+        for (const platform of this.objects.platforms) {
+          // Check if player is falling and close to the top of a platform
+          if (this.player.velocityY > 0 && 
+              playerBottom >= platform.y - 5 && 
+              playerBottom <= platform.y + 10 &&
+              playerRight - 5 >= platform.x && 
+              playerLeft + 5 <= platform.x + platform.width) {
+            
+            // Player is landing on platform
+            this.player.y = platform.y - this.player.height/2;
+            this.player.velocityY = 0;
+            this.player.isOnGround = true;
+            this.player.isJumping = false;
+            
+            debugLog("Landing on platform");
+            
+            // Skip other checks for this platform
+            continue;
+          }
+          
+          // Only check these if we haven't already landed on top of the platform
+          
+          // Check if player's head hits the bottom of a platform
+          if (this.player.velocityY < 0 && 
+              playerTop <= platform.y + platform.height && 
+              playerTop >= platform.y + platform.height - 10 &&
+              playerRight - 5 >= platform.x && 
+              playerLeft + 5 <= platform.x + platform.width) {
+            
+            // Head hitting bottom of platform
+            this.player.y = platform.y + platform.height + this.player.height/2;
+            this.player.velocityY = 0;
+            
+            // Skip other checks for this platform
+            continue;
+          }
+          
+          // Check if player hits the left side of a platform
+          if (playerRight >= platform.x && 
+              playerRight <= platform.x + 10 &&
+              playerBottom - 5 >= platform.y && 
+              playerTop + 5 <= platform.y + platform.height) {
+            
+            // Collision with left side of platform
+            this.player.x = platform.x - this.player.width/2;
+            this.player.velocityX = 0;
+            
+            // Skip other checks for this platform
+            continue;
+          }
+          
+          // Check if player hits the right side of a platform
+          if (playerLeft <= platform.x + platform.width && 
+              playerLeft >= platform.x + platform.width - 10 &&
+              playerBottom - 5 >= platform.y && 
+              playerTop + 5 <= platform.y + platform.height) {
+            
+            // Collision with right side of platform
+            this.player.x = platform.x + platform.width + this.player.width/2;
+            this.player.velocityX = 0;
+            
+            // Skip other checks for this platform
+            continue;
+          }
+        }
+      },
+      
+      // Update enemies
+      updateEnemies: function() {
+        for (const enemy of this.objects.enemies) {
+          // Move enemy back and forth within range
+          enemy.x += enemy.speed * enemy.direction;
+          
+          // Check if enemy reached the edge of its range
+          if (Math.abs(enemy.x - enemy.startX) > enemy.moveRange) {
+            enemy.direction *= -1;
+          }
+        }
+      },
+      
+      // Check coin collisions
+      checkCoinCollisions: function() {
+        const playerLeft = this.player.x - this.player.width/2;
+        const playerRight = this.player.x + this.player.width/2;
+        const playerTop = this.player.y - this.player.height/2;
+        const playerBottom = this.player.y + this.player.height/2;
+        
+        for (const coin of this.objects.coins) {
+          if (!coin.collected) {
+            const coinLeft = coin.x - 15;
+            const coinRight = coin.x + 15;
+            const coinTop = coin.y - 15;
+            const coinBottom = coin.y + 15;
+            
+            // Check for collision
+            if (playerRight >= coinLeft && 
+                playerLeft <= coinRight && 
+                playerBottom >= coinTop && 
+                playerTop <= coinBottom) {
+              
+              // Collect the coin
+              coin.collected = true;
+              this.stats.score += 10;
+              
+              // Play sound
+              if (this.sound && !this.sound.isMuted()) {
+                try {
+                  this.sound.playSuccess();
+                } catch (e) {
+                  debugLog("Error playing coin sound: " + e.message);
+                }
+              }
+            }
+          }
+        }
+      },
+      
+      // Check enemy collisions
+      checkEnemyCollisions: function() {
+        const playerLeft = this.player.x - this.player.width/2;
+        const playerRight = this.player.x + this.player.width/2;
+        const playerTop = this.player.y - this.player.height/2;
+        const playerBottom = this.player.y + this.player.height/2;
+        
+        for (const enemy of this.objects.enemies) {
+          const enemyLeft = enemy.x - enemy.width/2;
+          const enemyRight = enemy.x + enemy.width/2;
+          const enemyTop = enemy.y - enemy.height/2;
+          const enemyBottom = enemy.y + enemy.height/2;
+          
+          // Check for collision
+          if (playerRight >= enemyLeft && 
+              playerLeft <= enemyRight && 
+              playerBottom >= enemyTop && 
+              playerTop <= enemyBottom) {
+            
+            // Check if we're landing on top of enemy
+            if (this.player.velocityY > 0 && 
+                playerBottom <= enemyTop + enemy.height/2) {
+              
+              // Bounce off the enemy
+              this.player.velocityY = -this.physics.jumpStrength * 0.7;
+              
+              // Move enemy offscreen to "remove" it
+              enemy.x = -1000;
+              
+              // Increment score
+              this.stats.score += 20;
+              
+              // Play sound
+              if (this.sound && !this.sound.isMuted()) {
+                try {
+                  this.sound.playHit();
+                } catch (e) {
+                  debugLog("Error playing enemy hit sound: " + e.message);
+                }
+              }
+            } else {
+              // Collision with enemy, not from above
+              // Restart the level
+              this.loadLevel(this.stats.level - 1);
+              
+              // Play sound
+              if (this.sound && !this.sound.isMuted()) {
+                try {
+                  this.sound.playHit();
+                } catch (e) {
+                  debugLog("Error playing player hit sound: " + e.message);
+                }
+              }
+            }
+          }
+        }
+      },
+      
+      // Check flag collision
+      checkFlagCollision: function() {
+        const playerLeft = this.player.x - this.player.width/2;
+        const playerRight = this.player.x + this.player.width/2;
+        const playerTop = this.player.y - this.player.height/2;
+        const playerBottom = this.player.y + this.player.height/2;
+        
+        const flag = this.objects.goalFlag;
+        const flagLeft = flag.x - 20;
+        const flagRight = flag.x + 20;
+        const flagTop = flag.y - 40;
+        const flagBottom = flag.y + 10;
+        
+        // Check for collision
+        if (playerRight >= flagLeft && 
+            playerLeft <= flagRight && 
+            playerBottom >= flagTop && 
+            playerTop <= flagBottom) {
+          
+          // Check if this is the last level
+          if (this.stats.level >= this.stats.maxLevel) {
+            // Game complete
+            this.showWinScreen();
+          } else {
+            // Advance to next level
+            this.stats.level++;
+            this.loadLevel(this.stats.level - 1);
+            
+            // Play sound
+            if (this.sound && !this.sound.isMuted()) {
+              try {
+                this.sound.playSuccess();
+              } catch (e) {
+                debugLog("Error playing level complete sound: " + e.message);
+              }
+            }
+          }
+        }
+      },
+      
+      // Show win screen
+      showWinScreen: function() {
+        this.isRunning = false;
+        this.winScreenActive = true;
+        this.winScreenTimer = 0;
+        
+        // Play victory sound if available
+        if (this.sound && !this.sound.isMuted()) {
+          try {
+            this.sound.playSuccess();
+          } catch (e) {
+            debugLog("Error playing win sound: " + e.message);
+          }
+        }
+        
+        // We'll use the game loop to animate the win screen
+        const animateWin = () => {
+          if (!this.winScreenActive) return;
+          
+          this.winScreenTimer++;
+          
+          // Clear the canvas
+          this.context.fillStyle = 'black';
+          this.context.fillRect(0, 0, this.width, this.height);
+          
+          // Draw victory text
+          this.context.fillStyle = 'gold';
+          this.context.font = '60px Arial';
+          this.context.textAlign = 'center';
+          this.context.fillText('YOU WIN!', this.width/2, 200);
+          
+          // Draw score
+          this.context.fillStyle = 'white';
+          this.context.font = '30px Arial';
+          this.context.fillText(`Final Score: ${this.stats.score}`, this.width/2, 300);
+          
+          // Draw confetti
+          for (let i = 0; i < 50; i++) {
+            const x = (Math.sin((i * 10 + this.winScreenTimer) * 0.05) * 0.5 + 0.5) * this.width;
+            const y = ((i * 15 + this.winScreenTimer * 2) % this.height);
+            const size = Math.random() * 15 + 5;
+            this.context.fillStyle = `hsl(${(i * 10 + this.winScreenTimer) % 360}, 100%, 50%)`;
+            this.context.fillRect(x, y, size, size);
+          }
+          
+          // Draw restart prompt
+          this.context.fillStyle = 'white';
+          this.context.font = '30px Arial';
+          this.context.fillText('Press SPACE to play again', this.width/2, 400);
+          
+          requestAnimationFrame(animateWin);
+        };
+        
+        animateWin();
+      },
+      
+      // Render the game
+      render: function() {
+        // Clear the canvas
+        this.context.fillStyle = '#111';
+        this.context.fillRect(0, 0, this.width, this.height);
+        
+        // Draw platforms
+        this.context.fillStyle = '#888';
+        for (const platform of this.objects.platforms) {
+          this.context.fillRect(platform.x, platform.y, platform.width, platform.height);
+        }
+        
+        // Draw coins
+        this.context.fillStyle = 'gold';
+        for (const coin of this.objects.coins) {
+          if (!coin.collected) {
+            this.context.beginPath();
+            this.context.arc(coin.x, coin.y, 15, 0, Math.PI * 2);
+            this.context.fill();
+          }
+        }
+        
+        // Draw enemies
+        this.context.fillStyle = 'red';
+        for (const enemy of this.objects.enemies) {
+          this.context.fillRect(enemy.x - enemy.width/2, enemy.y - enemy.height/2, enemy.width, enemy.height);
+        }
+        
+        // Draw goal flag
+        const flag = this.objects.goalFlag;
+        this.context.fillStyle = 'lime';
+        // Flag pole
+        this.context.fillRect(flag.x, flag.y - 50, 5, 60);
+        // Flag cloth
+        this.context.beginPath();
+        this.context.moveTo(flag.x + 5, flag.y - 50);
+        this.context.lineTo(flag.x + 5, flag.y - 20);
+        this.context.lineTo(flag.x + 30, flag.y - 35);
+        this.context.closePath();
+        this.context.fill();
+        
+        // Draw player
+        this.context.fillStyle = 'blue';
+        this.context.fillRect(
+          this.player.x - this.player.width/2, 
+          this.player.y - this.player.height/2, 
+          this.player.width, 
+          this.player.height
+        );
+        
+        // Draw HUD
+        this.context.fillStyle = 'white';
+        this.context.font = '20px Arial';
+        this.context.textAlign = 'left';
+        this.context.fillText(`Score: ${this.stats.score}`, 20, 30);
+        this.context.fillText(`Level: ${this.stats.level}/${this.stats.maxLevel}`, 20, 60);
+      }
+    };
+    
+    // Set up audio controls
+    document.getElementById('audio-controls').addEventListener('click', function() {
+      PlatformerGame.isMuted = !PlatformerGame.isMuted;
+      document.getElementById('audio-controls').textContent = `Sound: ${PlatformerGame.isMuted ? 'OFF' : 'ON'}`;
+      debugLog("Sound set to: " + (PlatformerGame.isMuted ? 'OFF' : 'ON'));
+    });
+    
+    // Set up sound object
+    const soundOptions = {
+      playHit: function() {
+        if (!PlatformerGame.isMuted) {
+          try {
+            PlatformerGame.hitSound.play().catch(e => {
+              debugLog("Error playing hit sound: " + e.message);
+            });
+          } catch(e) {
+            debugLog("Exception playing hit sound: " + e.message);
+          }
+        }
+      },
+      playSuccess: function() {
+        if (!PlatformerGame.isMuted) {
+          try {
+            PlatformerGame.successSound.play().catch(e => {
+              debugLog("Error playing success sound: " + e.message);
+            });
+          } catch(e) {
+            debugLog("Exception playing success sound: " + e.message);
+          }
+        }
+      },
+      isMuted: function() {
+        return PlatformerGame.isMuted;
+      }
+    };
+    
+    // Initialize the game
+    const container = document.getElementById('game-container');
+    PlatformerGame.initAudio();
+    PlatformerGame.init(container, soundOptions);
+    
+    // Add focus to canvas automatically
+    window.addEventListener('load', function() {
+      container.focus();
+      debugLog("Container focused");
+    });
+  </script>
+</body>
+</html>
