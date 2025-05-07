@@ -107,23 +107,16 @@
   <div class="instructions">
     Arrow Keys or WASD to move, Space to jump.
   </div>
-  
-  <div id="debug-output"></div>
 
   <script>
-    // Debug helpers
+    // Silent debug helpers - only log to console
     function debugLog(message) {
-      const debugOutput = document.getElementById('debug-output');
-      debugOutput.textContent += message + "\n";
+      // Only log to console in production
       console.log(message);
-      
-      // Auto-scroll to bottom
-      debugOutput.scrollTop = debugOutput.scrollHeight;
     }
     
     window.onerror = function(message, source, lineno, colno, error) {
-      debugLog(`ERROR: ${message}\n at line ${lineno}:${colno}`);
-      console.error(message, error);
+      console.error(`ERROR: ${message} at line ${lineno}:${colno}`, error);
       return true;
     };
     
