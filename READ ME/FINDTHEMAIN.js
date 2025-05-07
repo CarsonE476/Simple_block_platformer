@@ -1,1 +1,0 @@
-// to find the main, go to client, then public, then js game.js
