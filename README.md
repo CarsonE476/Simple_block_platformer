@@ -6,32 +6,33 @@ A simple platformer game with 3 levels of increasing difficulty. The game featur
 
 There are several ways to run the game:
 
-### Option 1: Run using the bash script (for Mac/Linux users)
-
-1. Open a terminal in the project directory
-2. Run the following command:
-   ```
-   ./start-game-server.sh
-   ```
-3. Choose one of the options presented:
-   - Run using a simple HTTP server
-   - Open game launcher in browser
-   - Open game directly in browser
-
-### Option 2: Run using Node.js
+### Option 1: Run using Node.js
 
 1. Open a terminal in the project directory
 2. Run the following command to start the server:
    ```
    node simple-server.js
    ```
+   Note: Make sure Node.js version 14+ is installed on your system
 3. Open your browser and navigate to `http://localhost:3000`
 
-### Option 3: Open the HTML files directly
+### Option 2: Open the HTML files directly
 
 1. Simply open one of these files in your browser:
-   - `game-launcher.html` - This will show a game launcher that can open the game
-   - `platformer-game.html` - This opens the game directly
+   - `index.html` - The main game launcher (recommended)
+   - `platformer-game.html` - Opens the game directly
+   
+### Option 3: Deploy to GitHub Pages
+
+This game is designed to work perfectly with GitHub Pages:
+
+1. Create a new GitHub repository
+2. Upload these files to the repository:
+   - `index.html`
+   - `platformer-game.html`
+   - `README.md`
+3. Enable GitHub Pages in your repository settings
+4. Your game will be live at: `https://your-username.github.io/repository-name/`
 
 ## Game Controls
 
