@@ -47,22 +47,7 @@
       z-index: 100;
     }
     
-    #debug-output {
-      display: none; /* Hide debug output in production */
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 10px;
-      max-width: 300px;
-      z-index: 1000;
-      font-family: monospace;
-      white-space: pre-wrap;
-      max-height: 100px;
-      overflow-y: auto;
-      font-size: 10px;
-    }
+    /* Debug output removed */
     
     /* Responsive scaling handled by width/height 100% with aspect-ratio preservation */
     @media (max-width: 768px) {
@@ -265,8 +250,8 @@
         this.hitSound = new Audio();
         this.successSound = new Audio();
         
-        // Use inline audio data to avoid path issues
-        this.successSound.src = "data:audio/wav;base64,UklGRg4FAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YQAFAAB/f39/f39/f3+AfH53eHR1fYOKj5KQhHpsX1JSXW+HoLbIz9TQwqaGYjgcBQAGHUl5r9r2/v3wzbmUaEAcBAYaNW2e0/3///fWtod0XnB4eHh4eHh4eHh4eHh4eHh4eHh4eFQzGQ0KCg0ZNFSHmKacjHFcRTQpIic6XIKZ0PL/+OHDn3RQKwsPJTtYeZKlssC+tKCSfmRNMx8QGzRkrNb2/Pz0yaB2TTsdAQASK1V6mLnS2+PcxqmOcVY9LP7gwKiw0PL///////////7x38e0mYJnTDA9TGF2iZyz0vL/////////+NrEp41sUTZXjq7Z+f/////96tbFtaaJZkMaAQILJktshpqvu7Wpmo6BcmJQMxkeMV+ezO/u07mfkYiLnazt///3zbiXemc9KSIqNkVUYGRfU0InFiVXj7XT1+TdvJh4YmBtgqLJ6vz////////jxK6RcVQzHDRXhq3P29/c0cS1oo+Ab2NVRT4xJR0aGRwjMEVVY2ZjWlNNR0E7NjNMfbPu//XOsZqMgHh1d3t/cWddVFNbZnKEnrPF1uHo6+rn4t/Y087LxcPFx8zU2eHq8fj8/v35+Pn8/f3+/f37+/r6+fn5+fn4+Pf29vX19PT09PT09PT09PT09PT09PT09PT09PT09fX19vj5+/38/PjpzKyRc11HNCcfGhUPCQogR21pcmdeT0M0JhYIDjZmmr3FyMjHx8fGxsS3p5d9Zh8BAxAocK3r//nQt5qNgXZvbW91gIuYprG+yMnJsJ+PZEIXKF2EpLOtpqCalsHP8f7/+OXMrI55Z1xURj4zJhoTFBwpPVRocXNycnJva2dlXVVORT0zHws0ZY6mtbW1usPM0dnh4dO3iVAUAx5OdoOQk5OPi46RlJaXmJmbnaChoqKelXtbRTY1M0FFTEpKQTgqQXm0/v/+6L+Qahg4Z4STlJOamZKKeXNsXVdST01LQzw0LCMYCwEqUneKjIyKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi46aoHd1hJCVlpaYn6mxuL/Ey9HZ4env7eLav7GTdlMuDQECEDJccZCkur/Dxb6+x9LZ3OXn3NBxUCULDRovQUxTWV1gY2ZpbG5vcHBwb21qZ2NgWlRMQzktIRMAI1N6nrXBx8vNzc3MzMzLzM3Nzc3Ny8nGw72skm5MJQsbO1+Gnq21vcHDw8PDw8PDw8PDw8PCwb+9urnCzdSxjGEvIB4dHR0cHBwcHB0eICQpMDk/RklMTEtIREM+OTUwKiMaEQgDCiNLcJaqt7y+wcPExcbGxsbGxsXFxcTDw8LCwsHAv7++vr2+v8TM1rqIdVVGKAwDAAAAAAAACzBlnr7V4+zy9vj49/X08e7q5uLd2NLMx8C5squko5ubmZiXlpWSjYiDfnhyb2RULwkGDRwyR1ZiZ2pocHd9hYqSmJ2hpKamnJOJfGYDAAAAChUmO1JndXyAf3hya2NhZnKAlqu8x8zLx8bJzM/R0tPU1NXT0tHQz87Nzc3NzMzMzMzKyMbEwsDAvry6ubCijHNaV2d7kZ2stsDFxsOskHJXTk1NTU1NTU1NTU1NTU1NTU1NUVZlcXd4c21lXVRLQ0Jcntr/+d3Op5eBcmljXltYVVFOTpCRkZCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkZGRkZGSnJ6agFlFLBsI";
+        // Use a simpler jump sound (softer and more pleasant)
+        this.successSound.src = "data:audio/wav;base64,UklGRogDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAAACABAAZGF0YWQDAAAAAAAAfc9/z3/Pf89/z3/PAAAAgM+Az4DPgM+AzwAAAIHPgc+Bz4HPgc8AAACCz4LPgs+Cz4LPAAAAg8+Dz4PPg8+DzwAAAITPhM+Ez4TPhM8AAACFz4XPhc+Fz4XPAAAAhs+Gz4bPhs+GzwAAAIfPh8+Hz4fPh88AAACIz4jPiM+Iz4jPAAAAic+Jz4nPic+JzwAAAIrPis+Kz4rPis8AAACLz4vPi8+Lz4vPAAAAjM+Mz4zPjM+MzwAAAI3Pjc+Nz43Pjc8AAACOz47Pjs+Oz47PAAAAj8+Pz4/Pj8+PzwAAAJDPkM+Qz5DPkM8AAACRz5HPkc+Rz5HPAAAAks+Sz5LPks+SzwAAAJPPk8+Tz5PPk88AAACUz5TPlM+Uz5TPAAAAlc+Vz5XPlc+VzwAAAJbPls+Wz5bPls8AAACXz5fPl8+Xz5fPAAAAmM+Yz5jPmM+YzwAAAJnPmc+Zz5nPmc8AAACaz5rPms+az5rPAAAAm8+bz5vPm8+bzwAAAJzPnM+cz5zPnM8AAACdz53Pnc+dz53PAAAAns+ez57Pns+ezwAAAJ/Pn8+fz5/Pn88AAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAADFgAYABgAGAAYABgABgAGAAYABgAGAAAABhAGEAYQBhAGAAAACYgJiAmICYgJgAAACmIKYgpiCmIKYAAAC0ILQgtCC0ILQAAADCIMIgwiDCIMIAAADQINAg0CDQINAAAADYIN4g3iDeIN4AAADsIOwg7CDsIOwAAAD6IPog+iD6IPog/CAEIQwhFCEcISQhLCE0ITwhRCFMIVQhXCFkIWwhdCF8IYQhjCGUIZwhpCGsIbQhvCHEIcwh1CHcIeQh7CH0Ifwh/CEEIgwiDCIUIhwiJCIsIjQiPCJEIkwiVCJcImQibCJ0InwihCKMIpQinCKkIqwitCK8IsQizCLUItwi5CLsIvQi/CL8IgQjDCMMIxQjHCMkIywjNCM8I0QjTCNUI1wjZCNsI3QjfCOEI4wjlCOcI6QjrCO0I7wjxCPMI9Qj3CPkI+wj9CP8I/wj/CMEJAwkDCQUJBwkJCQsJDQkPCREJEwkVCRcJGQkbCR0JHwkhCSMJJQknCSkJKwktCS8JMQkzCTUJNwk5CTsJPQk/CT8JPwkBCUMJQwlFCUcJSQlLCU0JTwlRCVMJVQlXCVkJWwldCV8JYQljCWUJZwlpCWsJbQlvCXEJcwl1CXcJeQl7CX0Jfwl/CX8JgAm";
         this.hitSound.src = "data:audio/wav;base64,UklGRjAEAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YQwEAACafXRvbGxwd4SWpLGyvbKjjoVyZWBmbXqRrcbc5ezp39LBq5F2XEQvIBsYICk7VnWWsMbUzK6GVhgCBBcsbZnJ6fTw3b+UZTgdHDNTi73f7O/r2rptPhIhTHeqz+Lj18ucWScbQW2n0ezw5MmaTiQiUYa44PX16dCiYi0dTIS35vv88tymXikgUIS04/n68dekYDImWo264/j479eoZTAhT4Cz5fz89dmqaTEfRXqx5/7/+dymYi4iU4e46v7/+d6sYykbQnSs3fj59eG4gEknKliFvOz////77NClcUMrMFaDvfD////969OsflQvMFJ6tvP////761p/uuX////6cYq31//////8ZH6y3/////9QcKrh/////0Voq+L/////N1qk5P////8pT5vl/////xtHk+f/////EkCV6P////8JPpbt/////wE0hu////////AqfMP/////6ixyjNbs7evr7//tz6d4TC0PGjNYi7jYz7+uoo+AeX+NrcLb6vLu4s61mXVVNikrMT9VdI6pvMjR1tfY2NnZ2tvb29zc3dug5P/75L15PxIZMViBr9Xj5N/X0NTf7v348Ofi29PLw7y1sq6qqKWioZ+enZybmpmYlpWTkpCOjYuJh4WEgoGAf39+fXx7e3p5eXh4d3d2dnV1dXV0dHRxbWdjXlpWU1FMRj85NDAtKikkHxoXEg8NBwgDA//6+/vwQpre9/bx7ezr6+vq8ff538+xk3NbQzIlGhEKBAIGDRcqP1VmcnhzZlE3IAkEECpUjMDn9fLs5OPj4uHh4eTp8PlnSYWuzd/o6Ojk3NO9pI10YGJzj7HQ3NrGnHVWPS84TWed0/P8/ffv4tHBtq2mnp6gqbTC0NXRxq2Nb1FKV3Ge0vr///zkxJZvUDgwPmSRu+f6+OvXuZmGd2xoaW56jqCwvMfPz8fU7//xz65/RxYLIU+Ixff//+jFkk0QIVeX2P///+bJnWAjEzh0xP////TjwYxYLyNRlef////25siZXS8dQXnG/////O3TrHFBHCJMj+H////67NGiZDYeL12V5v////ry2KlkMBctVo7g////+/DZqWkzFSNDgNT////98d2vcTkXHDFemuj////77dKhYDIZKEqL3P////ju1ahgLBcmS4zh////+e3UpFwlEyNEg9n////67tmsaDUUGzRjoen////36M+fXS8WIUeJ3f////vs0KFbLBYjSYvf////+e3Upl8pEh9AgNX////77deqZS4SHDlvs+7////56c2dYDUfLFOS5f////rt0J9fMBMXL2Oo7P////nr0ahnNBIUKlyf5/////z059CfYDMVGChWluL////99urSpF8wFBgpVZTg////+/Xq0J5dLRAUKFqY4f////369e/nzqmEXz8qKT1fls/1/////vny59W7lmZBLiUyTXyp1/b///////334r6GVTwzNUR0nNLv///////9+e7dxaJ5Sz0xMkd2nNHr///////+/v38+/v7+/v7+/v7";
         
         document.getElementById('audio-controls').textContent = `Sound: ${this.isMuted ? 'OFF' : 'ON'}`;
