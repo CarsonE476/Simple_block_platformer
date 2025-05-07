@@ -14,15 +14,25 @@
       min-height: 100vh;
       background-color: #222;
       font-family: Arial, sans-serif;
+      overflow: hidden; /* Prevent scrollbars */
     }
     
     #game-container {
       position: relative;
-      width: 1280px;
-      height: 720px;
+      width: 100%;
+      height: 100vh;
+      max-width: 1280px; 
+      max-height: 720px;
+      aspect-ratio: 16 / 9;
       border: 4px solid #444;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
       overflow: hidden;
+    }
+    
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
     
     #audio-controls {
@@ -38,38 +48,53 @@
     }
     
     #debug-output {
+      display: none; /* Hide debug output in production */
       position: fixed;
       bottom: 10px;
       left: 10px;
       background: rgba(0,0,0,0.7);
       color: white;
       padding: 10px;
-      max-width: 80%;
+      max-width: 300px;
       z-index: 1000;
       font-family: monospace;
       white-space: pre-wrap;
-      max-height: 200px;
+      max-height: 100px;
       overflow-y: auto;
+      font-size: 10px;
     }
     
-    @media (max-width: 1300px) {
+    /* Responsive scaling handled by width/height 100% with aspect-ratio preservation */
+    @media (max-width: 768px) {
+      body {
+        align-items: flex-start; /* Better alignment on mobile */
+      }
+      
       #game-container {
-        width: 960px;
-        height: 540px;
+        max-width: 100%;
+        height: auto;
+        margin-top: 20px;
       }
     }
     
-    @media (max-width: 980px) {
-      #game-container {
-        width: 640px;
-        height: 360px;
-      }
+    /* Game instructions */
+    .instructions {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 16px;
+      padding: 10px;
+      pointer-events: none;
+      z-index: 200;
+      background-color: rgba(0,0,0,0.5);
     }
     
-    @media (max-width: 660px) {
-      #game-container {
-        width: 320px;
-        height: 180px;
+    @media (max-height: 500px) {
+      .instructions {
+        display: none; /* Hide instructions on small screens */
       }
     }
   </style>
@@ -77,6 +102,10 @@
 <body>
   <div id="game-container">
     <div id="audio-controls">Sound: ON</div>
+  </div>
+  
+  <div class="instructions">
+    Arrow Keys or WASD to move, Space to jump.
   </div>
   
   <div id="debug-output"></div>
